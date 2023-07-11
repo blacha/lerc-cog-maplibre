@@ -96,8 +96,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     type: 'raster',
                     tiles: ['cog+lerc:///Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
                     tileSize: 256,
-                    // attribution: 'LINZ'
                 },
+                // TODO why do we need both a hillshade and terrain source
+                // ref : https://maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/
                 hillshadeSource: {
                     type: 'raster-dem',
                     tiles: ['cog+lerc:///Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
