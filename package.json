@@ -1,0 +1,21 @@
+{
+  "name": "dem-map",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx esbuild --bundle --outfile=./dist/index.js src/index.ts --platform=browser",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@basemaps/geo": "^6.40.0",
+    "@chunkd/source-url": "^6.0.0",
+    "@cogeotiff/core": "^7.2.1",
+    "esbuild": "^0.18.11",
+    "lerc": "^4.0.1",
+    "maplibre-gl": "^3.2.0"
+  }
+}
