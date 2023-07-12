@@ -1,5 +1,7 @@
 # LERC COGs as Maplibre DEM source
 
+![Example render](./2023-07-lerc-dem-color-ramp.webp)
+
 Grab some elevation data eg https://data.linz.govt.nz/layer/107436-taranaki-lidar-1m-dem-2021/
 
 Make VRT
