@@ -1,19 +1,41 @@
 import { SourceUrl } from '@chunkd/source-url';
 import { CogTiff, TiffTag } from '@cogeotiff/core';
 import m from 'maplibre-gl';
+import { ColorRamp } from './ramp.js';
 
 // to make wasm loading easier LERC is imported via a <script />
-declare const Lerc:any; // FIXME typing
+declare const Lerc: any; // FIXME typing
 
 // FIXME hack @cogeotiff/core as it does not have the TiffTag for LERC
 (TiffTag as any)[0xc5f2] = 'Lerc'
 
 const tiffs = new Map<string, Promise<CogTiff>>();
 
+// Stolen from https://github.com/andrewharvey/srtm-stylesheets/blob/master/stylesheets/color-ramps/srtm-Australia-color-ramp.gdaldem.txt
+const colorRamp = `nv 0 0 0 0
+-8764 0 0 0 255
+-4000 3 45 85 255
+-100 0 101 199 255
+0 192 224 255 255
+1 108 220 108 255
+55 50 180 50 255
+390 240 250 150 255
+835 190 185 135 255
+1114 180 128 107 255
+1392 235 220 175 255
+2228 215 244 244 255
+4000 255 255 255 255`
+
+const ramp = new ColorRamp(colorRamp, -9999)
+
 m.addProtocol('cog+lerc', (req, cb) => {
     if (req.type !== 'image') throw new Error('Invalid request type: ' + req.type)
     const urlParts = req.url.split('@');
-    const cogPath = urlParts[0].slice('cog+lerc:'.length + 2)
+    const cogParts = urlParts[0].split('#');
+    const cogPath = cogParts[0].slice('cog+lerc:'.length + 2)
+    let method = 'mapbox'
+    if (cogParts[1]) method = cogParts[1]
+
     const path = urlParts[urlParts.length - 1].split('/')
     const z = Number(path[0]);
     const x = Number(path[1]);
@@ -42,7 +64,7 @@ m.addProtocol('cog+lerc', (req, cb) => {
         // Log how big each tile is
         // console.log(tileId, tile.bytes.length)
 
-        console.time('create:elevation:' + tileId)
+        console.time('create:elevation:' + method + ':' + tileId)
 
         const decoded = Lerc.decode(tile.bytes.buffer)
 
@@ -51,12 +73,26 @@ m.addProtocol('cog+lerc', (req, cb) => {
         const buf = decoded.pixels[0];
 
         for (let i = 0; i < buf.length; i++) {
-            const px = buf[i]
+            let px = buf[i]
+
+            if (method === 'ramp') {
+                const offset = i * 4;
+
+                const color = ramp.get(px);
+                raw[offset + 0] = color[0]
+                raw[offset + 1] = color[1]
+                raw[offset + 2] = color[2]
+                raw[offset + 3] = color[3]
+                continue;
+            }
+
             // COG's NoData is -9999, TODO extract this from the LERC metadata
-            if (px === -9999 || px == 0) continue; // NO_DATA ignore
+            if (px === -9999 || px == 0) px = 0; // NO_DATA ignore
             const offset = i * 4;
             // Set alpha to full!
             raw[offset + 3] = 255
+
+
 
             /** mapbox */
             const base = -10_000;
@@ -73,7 +109,7 @@ m.addProtocol('cog+lerc', (req, cb) => {
             // raw[offset + 1] = (Math.floor(v % 256));
             // raw[offset + 2] = (Math.floor((v - Math.floor(v)) * 256));
         }
-        console.timeEnd('create:elevation:' + tileId)
+        console.timeEnd('create:elevation:' + method + ':' + tileId)
 
         cb(null, await createImageBitmap(new ImageData(raw, decoded.width, decoded.height)), 'immutable')
     })
@@ -94,20 +130,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             sources: {
                 raster: {
                     type: 'raster',
-                    tiles: ['cog+lerc:///Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
+                    tiles: ['cog+lerc://Taranaki2021/BJ29.3857.lerc.cog.tiff#ramp@{z}/{x}/{y}'],
                     tileSize: 256,
                 },
                 // TODO why do we need both a hillshade and terrain source
                 // ref : https://maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/
                 hillshadeSource: {
                     type: 'raster-dem',
-                    tiles: ['cog+lerc:///Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
+                    tiles: ['cog+lerc://Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
                     tileSize: 256,
                     encoding: 'mapbox'
                 },
                 terrainSource: {
                     type: 'raster-dem',
-                    tiles: ['cog+lerc:///Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
+                    tiles: ['cog+lerc://Taranaki2021/BJ29.3857.lerc.cog.tiff@{z}/{x}/{y}'],
                     tileSize: 256,
                     encoding: 'mapbox'
                 },
@@ -117,13 +153,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 {
                     id: 'hills',
                     type: 'hillshade',
-                    source: 'terrainSource',
+                    source: 'hillshadeSource',
                     layout: { visibility: 'visible' },
-                    paint: { 'hillshade-shadow-color': '#473B24' }
+                    paint: {
+                        // 'hillshade-shadow-color': '#273B24'
+                        'hillshade-shadow-color': '#000000'
+                    }
                 }
             ],
             terrain: {
-                source: 'terrainSource', exaggeration: 100
+                source: 'terrainSource', exaggeration: 150
             }
         }
     })
