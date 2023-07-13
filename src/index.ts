@@ -89,7 +89,7 @@ m.addProtocol('cog+lerc', (req, cb) => {
     for (const cogQk of cogs) {
         if (!targetTile.startsWith(cogQk)) continue;
 
-        const cog = tiffs.get(cogQk) ?? createTiff(`/${cogName}/${QuadKey.toZxy(cogQk)}.tiff`)
+        const cog = tiffs.get(cogQk) ?? createTiff(`${cogName}/${QuadKey.toZxy(cogQk)}.tiff`)
         tiffs.set(cogQk, cog);
 
         cog.then(async (tiff) => {
