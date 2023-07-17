@@ -43,3 +43,18 @@ export class ColorRamp {
         return this.ramps[this.ramps.length - 1].color
     }
 }
+
+// Stolen from https://github.com/andrewharvey/srtm-stylesheets/blob/master/stylesheets/color-ramps/srtm-Australia-color-ramp.gdaldem.txt
+export const ramp = new ColorRamp(`nv 0 0 0 0
+-8764 0 0 0 255
+-4000 3 45 85 255
+-100 0 101 199 255
+0 192 224 255 255
+1 108 220 108 255
+55 50 180 50 255
+390 240 250 150 255
+835 190 185 135 255
+1114 180 128 107 255
+1392 235 220 175 255
+2000 215 200 244 255
+4000 255 0 255 255`, -9999)

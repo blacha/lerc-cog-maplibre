@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset='UTF-8' />
+    <title>DeckGL example</title>
+    <script type="text/javascript" src="https://unpkg.com/lerc@4.0.1/LercDecode.min.js"></script>
+    <style>
+      body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+        margin:0;
+        padding:0;
+        overflow:hidden;
+      }
+      #app {
+        width: 100vw;
+        height: 100vh;
+      }
+      .deck-tooltip {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+        <canvas id="deck-canvas"></canvas>
+    </div>
+  </body>
+  <script src="dist/deck.js"></script>
+
+</html>
