@@ -13,8 +13,9 @@
   "dependencies": {
     "@basemaps/geo": "^6.40.0",
     "@basemaps/tiler": "^6.40.0",
-    "@chunkd/source-url": "^6.0.0",
-    "@cogeotiff/core": "^7.2.1",
+    "@chunkd/middleware": "^11.0.0",
+    "@chunkd/source-http": "^11.0.0",
+    "@cogeotiff/core": "^8.0.0",
     "@deck.gl/core": "^8.9.21",
     "@deck.gl/geo-layers": "^8.9.21",
     "esbuild": "^0.18.11",

@@ -1,11 +1,7 @@
 import m from 'maplibre-gl';
 import { lercToImage } from './cogs.js';
 
-
-
-
 const cancel = { cancel() { } };
-
 
 m.addProtocol('cog+lerc', (req, cb) => {
     if (req.type !== 'image') throw new Error('Invalid request type: ' + req.type)

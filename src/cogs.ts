@@ -1,10 +1,11 @@
-import { SourceUrl } from "@chunkd/source-url";
-import { QuadKey } from "./quadkey.js";
-import { CogTiff, TiffTag } from "@cogeotiff/core";
-import { CompositionTiff, Tiler } from "@basemaps/tiler";
-import { ramp } from "./ramp.js";
 import { GoogleTms } from "@basemaps/geo";
-import { decode } from "lerc";
+import { CompositionTiff, Tiler } from "@basemaps/tiler";
+import { SourceCache, SourceChunk } from "@chunkd/middleware";
+import { SourceView } from '@chunkd/source';
+import { SourceHttp } from "@chunkd/source-http";
+import { CogTiff } from "@cogeotiff/core";
+import { QuadKey } from "./quadkey.js";
+import { ramp } from "./ramp.js";
 
 export const Cogs = {
     'Taranaki2021': [
@@ -73,17 +74,18 @@ export const Cogs = {
         [13, 8078, 5080],
     ].map(f => QuadKey.fromTile(f[0], f[1], f[2]))
 }
+const cache = new SourceCache({ size: 64 * 1024 * 1024})
+window['sourceCache'] = cache;
+
+const chunk = new SourceChunk( {size: 64 * 1024 })
 
 function createTiff(path) {
-    const source = new SourceUrl(path);
-    source.chunkSize = 64 * 1000;
-    return new CogTiff(source).init(true)
+    const source = new SourceView(new SourceHttp(path), [chunk, cache]);
+    (source as any).uri = source.url.href;
+    return CogTiff.create(source)
 }
 
 const tiffs = new Map<string, Promise<CogTiff>>();
-
-// FIXME hack @cogeotiff/core as it does not have the TiffTag for LERC
-(TiffTag as any)[0xc5f2] = 'Lerc'
 declare const Lerc: any; // FIXME typing
 
 const emptyBuffer = (type) => {
@@ -135,7 +137,6 @@ export async function lercToBuffer(url: string): Promise<{ buffer: Float32Array,
         return cog.then(async (tiff) => {
             await Lerc.load()
 
-
             const tileId = `${z}-${x}-${y}.lerc`
             const result = await googleTiler.tile([tiff], x, y, z)
 
@@ -151,9 +152,8 @@ export async function lercToBuffer(url: string): Promise<{ buffer: Float32Array,
                 return null
             }
 
-            console.time('create:elevation:' + method + ':' + tileId)
 
-            const decoded = Lerc.decode(tile.bytes.buffer)
+            const decoded = Lerc.decode(tile.bytes)
 
             return { buffer: decoded.pixels[0], width: decoded.width, height: decoded.height }
         })
